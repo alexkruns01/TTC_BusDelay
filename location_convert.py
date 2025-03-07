@@ -5,8 +5,7 @@ import ssl
 import certifi
 
 ctx = ssl.create_default_context(cafile=certifi.where())
-geopy.geocoders.options.default_
-ssl_context = ctx
+geopy.geocoders.options.default_ssl_context = ctx
 
 
 def main():
