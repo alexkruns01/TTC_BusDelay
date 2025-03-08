@@ -12,19 +12,20 @@ def new_csv_address(csv_file, csv_write):
     """
     return a dictionary of incomplete address as key and complete address and value from <csv_file>
     """
+
     my_geocode = ArcGIS()
     with open(csv_file, newline='') as csvfile:
-        reader = csv.reader(csvfile)
-        next(reader)
-        address_dict = {}
         with open(csv_write, 'w', newline='') as new_data:
             write = csv.writer(new_data)
+            reader = csv.reader(csvfile)
+            write.writerow(next(reader))
+            address_dict = {}
             for line in reader:
                 if line[4] not in address_dict:
                     address = my_geocode.geocode(f"{line[4]}, Ontario")
                     address_dict[line[4]] = address
-                line[4] = address_dict[line[4]]
-                write.writerow(line)
+            line[4] = address_dict[line[4]]
+            write.writerow(line)
 
 
 def main():
