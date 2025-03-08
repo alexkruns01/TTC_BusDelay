@@ -10,7 +10,8 @@ geopy.geocoders.options.default_ssl_context = ctx
 
 def new_csv_address(csv_file, csv_write):
     """
-    return a dictionary of incomplete address as key and complete address and value from <csv_file>
+    read location from <csv_file>, and write data with full address
+    with coordinates on a new csv file <csv_write>
     """
 
     my_geocode = ArcGIS()
@@ -18,14 +19,25 @@ def new_csv_address(csv_file, csv_write):
         with open(csv_write, 'w', newline='') as new_data:
             write = csv.writer(new_data)
             reader = csv.reader(csvfile)
-            write.writerow(next(reader))
+
+            header = next(reader)
+            # Remove Location header as lat, long, ad will be appended to end of the line
+            header.pop(4)
+            write.writerow(header + ["Latitude", "Longitude", "Address"])
+
             address_dict = {}
             for line in reader:
+                # To improve speed only search through geocode if new location(not in dict key) is searched
                 if line[4] not in address_dict:
                     address = my_geocode.geocode(f"{line[4]}, Ontario")
                     address_dict[line[4]] = address
-            line[4] = address_dict[line[4]]
-            write.writerow(line)
+                lat = [address_dict[line[4]].latitude]
+                long = [address_dict[line[4]].longitude]
+                address = [address_dict[line[4]].address]
+
+                # Remove partial address on index 4 of the line. Does not change <csv_file>
+                line.pop(4)
+                write.writerow(line + lat + long + address)
 
 
 def main():
