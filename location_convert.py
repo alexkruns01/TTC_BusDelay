@@ -8,20 +8,37 @@ ctx = ssl.create_default_context(cafile=certifi.where())
 geopy.geocoders.options.default_ssl_context = ctx
 
 
+def full_address(csv_file):
+    """
+    return a dictionary of incomplete address as key and complete address and value from <csv_file>
+    """
+    my_geocode = ArcGIS()
+    with open(csv_file, newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader)
+        address_dict = {}
+        for line in reader:
+            address = my_geocode.geocode(f"{line[4]}, Ontario")
+            if line[4] not in address_dict:
+                address_dict[line[4]] = address
+
+    return address_dict
+
+
+def write_processed_data(line, address):
+
+
 def main():
     my_geocode = ArcGIS()
     with open('ttc-bus-delay-data-2024.csv', newline='') as csvfile:
-        delay_reader = csv.reader(csvfile)
-        next(delay_reader)
-        g = 0
-        for line in delay_reader:
-            g += 1
-            n = my_geocode.geocode(f"{line[4]}, Toronto")
-            print(my_geocode.geocode(n))
-            print(n[::])
-            if g == 100:
-                break
+        reader = csv.reader(csvfile)
+        next(reader)
 
+    with open("final_ttc_bus_delay_2024.csv", 'w', newline='') as new_data:
+            write = csv.writer(new_data)
+            for line in reader:
+                address = full_address(line)
+                write_processed_data(line, address)
 
 
 if __name__ == '__main__':
