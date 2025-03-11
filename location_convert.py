@@ -44,7 +44,7 @@ def is_outlier(address):
     :param address:
     :return Bool:
     """
-    return not (43.550789 < address.latitude < 43.850155
+    return not (43.550789 < address.latitude < 43.920318
                 and -79.90089 < address.longitude < -78.948069)
 
 
@@ -59,20 +59,19 @@ def get_gta_address(address):
 
     # if address is inaccurate, then print the inaccurate address and retry geocoding
     while is_outlier(full_address):
-        print("REPEAT")
+        print(f"REPEAT, {address}, {full_address}", end='', flush=True)
         full_address = my_geocode.geocode(f"{address}, Toronto, Canada")
-        if is_outlier(full_address):
+        if not is_outlier(full_address):
             return full_address
         full_address = my_geocode.geocode(f"{address}, York, Canada")
-        if is_outlier(full_address):
+        if not is_outlier(full_address):
             return full_address
         full_address = my_geocode.geocode(f"{address}, Scarborough, Canada")
-        if is_outlier(full_address):
+        if not is_outlier(full_address):
             return full_address
         full_address = my_geocode.geocode(f"{address}, Etobicoke, Canada")
-        if is_outlier(full_address):
+        if not is_outlier(full_address):
             return full_address
-    print()
 
     return full_address
 
@@ -87,9 +86,12 @@ def geocode_address(csv_read, csv_write):
 
     address_dict = {}
     for line in csv_read:
+        print('-', flush=True)
         # To improve speed only search through geocode if new location(not in dict key) is searched
         if line[4] not in address_dict:
             address_dict[line[4]] = get_gta_address(line[4])
+        else:
+            print('_', flush=True)
 
         lat = [address_dict[line[4]].latitude]
         long = [address_dict[line[4]].longitude]
