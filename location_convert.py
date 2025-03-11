@@ -15,18 +15,66 @@ def date_format(date: str):
     :return: str
     """
     d = date.split('-')
-    return f"{d[2]}-{d[1]}-{d[0]}"
+    if len(d[0]) == 1:
+        d[0] = f"0{d[0]}"
+
+    month_dict = {
+        "Jan": "01",
+        "Feb": "02",
+        "Mar": "03",
+        "Apr": "04",
+        "May": "05",
+        "Jun": "06",
+        "Jul": "07",
+        "Aug": "08",
+        "Sep": "09",
+        "Oct": "10",
+        "Nov": "11",
+        "Dec": "12",
+    }
+    d[1] = month_dict[d[1]]
+
+    return f"20{d[2]}-{d[1]}-{d[0]}"
 
 
-def print_outlier(address):
+def is_outlier(address):
     """
     return True if address is inaccurate.
     By inaccurate, if coordinate is not in the vicinity of GTA
     :param address:
     :return Bool:
     """
-    return "Ontario" not in address.address or not (43.428982 < address.latitude < 44.037264
-                                                    and -79.878022 < address.longitude < -79.022919)
+    return not (43.550789 < address.latitude < 43.850155
+                and -79.90089 < address.longitude < -78.948069)
+
+
+def get_gta_address(address):
+    """
+    return full address from incomplete str address <address>
+    :param address:
+    :return str:
+    """
+    my_geocode = ArcGIS()
+    full_address = my_geocode.geocode(f"{address}, Toronto, Canada")
+
+    # if address is inaccurate, then print the inaccurate address and retry geocoding
+    while is_outlier(full_address):
+        print("REPEAT")
+        full_address = my_geocode.geocode(f"{address}, Toronto, Canada")
+        if is_outlier(full_address):
+            return full_address
+        full_address = my_geocode.geocode(f"{address}, York, Canada")
+        if is_outlier(full_address):
+            return full_address
+        full_address = my_geocode.geocode(f"{address}, Scarborough, Canada")
+        if is_outlier(full_address):
+            return full_address
+        full_address = my_geocode.geocode(f"{address}, Etobicoke, Canada")
+        if is_outlier(full_address):
+            return full_address
+    print()
+
+    return full_address
 
 
 def geocode_address(csv_read, csv_write):
@@ -34,8 +82,6 @@ def geocode_address(csv_read, csv_write):
     read location from <csv_file>, and write data with full address
     with coordinates on a new csv file <csv_write>
     """
-    my_geocode = ArcGIS()
-
     header = next(csv_read)
     csv_write.writerow(header + ["Latitude", "Longitude", "Address"])
 
@@ -43,15 +89,7 @@ def geocode_address(csv_read, csv_write):
     for line in csv_read:
         # To improve speed only search through geocode if new location(not in dict key) is searched
         if line[4] not in address_dict:
-            address = my_geocode.geocode(f"{line[4]}, Ontario, Canada")
-
-            # if address is inaccurate, then print the inaccurate address and retry geocoding
-            if print_outlier(address):
-                print(address.latitude, address.longitude, address.address)
-                address = my_geocode.geocode(f"{line[4]}, Toronto, Canada")
-                print(address.latitude, address.longitude, address.address, line[4], '\n')
-
-            address_dict[line[4]] = address
+            address_dict[line[4]] = get_gta_address(line[4])
 
         lat = [address_dict[line[4]].latitude]
         long = [address_dict[line[4]].longitude]
@@ -63,7 +101,9 @@ def geocode_address(csv_read, csv_write):
 
 
 def main():
-    my_geocode = ArcGIS()
+    # my_geocode = ArcGIS()
+    # print(my_geocode.geocode("VICTORIA PARK, Toronto, Canada"))
+
     with open("ttc-bus-delay-data-2024.csv", newline='') as csvfile:
         with open("final_ttc_bus_delay_2024.csv", 'w', newline='') as new_csv:
             write = csv.writer(new_csv)
