@@ -86,12 +86,12 @@ def geocode_address(csv_read, csv_write):
 
     address_dict = {}
     for line in csv_read:
-        print('-', flush=True)
+        print('-', flush=True, end='')
         # To improve speed only search through geocode if new location(not in dict key) is searched
         if line[4] not in address_dict:
             address_dict[line[4]] = get_gta_address(line[4])
         else:
-            print('_', flush=True)
+            print('_', flush=True, end='')
 
         lat = [address_dict[line[4]].latitude]
         long = [address_dict[line[4]].longitude]
@@ -104,7 +104,7 @@ def geocode_address(csv_read, csv_write):
 
 def main():
     # my_geocode = ArcGIS()
-    # print(my_geocode.geocode("VICTORIA PARK, Toronto, Canada"))
+    # print(my_geocode.geocode("British Columbia Road, Toronto, Canada"))
 
     with open("ttc-bus-delay-data-2024.csv", newline='') as csvfile:
         with open("final_ttc_bus_delay_2024.csv", 'w', newline='') as new_csv:
